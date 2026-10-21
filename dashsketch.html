@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DashSketch — Pola Sketsa Putus-putus</title>
+<style>
+:root{--blue:#315eea;--ink:#1c2740;--muted:#68758c;--line:#e3e8f1;--bg:#f5f7fb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:auto;padding:22px 14px 40px}
+header{padding:12px 2px 18px}
+.kicker{color:var(--blue);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(27px,5vw,42px);line-height:1.08;margin:8px 0 10px;letter-spacing:-.04em}
+header p{max-width:650px;color:var(--muted);line-height:1.6;margin:0}
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 6px 22px #24365a08}
+.panel h2{font-size:16px;margin:0 0 14px}
+.uploadbox{display:block;border:1.5px dashed #aab9dc;border-radius:13px;padding:17px 12px;text-align:center;background:#f8faff;cursor:pointer}
+.uploadbox strong{display:block;margin:6px 0 3px}
+.uploadbox span{font-size:12px;color:var(--muted)}
+input[type=file]{width:100%;margin-top:12px;font-size:13px}
+.control{margin-top:19px}
+.labelrow{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px;font-weight:700;margin-bottom:8px}
+.labelrow output{color:var(--blue);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.hint{font-size:12px;line-height:1.5;color:var(--muted);margin:7px 0 0}
+select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink)}
+.checkrow{display:flex;gap:9px;align-items:center;font-size:13px;margin-top:16px}
+.checkrow input{accent-color:var(--blue)}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:20px}
+button{border:0;border-radius:10px;padding:12px 10px;font-weight:750;font-size:13px;cursor:pointer}
+.primary{background:var(--blue);color:white}
+.secondary{background:#edf1fb;color:#2545a2}
+button:disabled{opacity:.45;cursor:not-allowed}
+.previewhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.previewhead h2{margin:0}
+.tag{font-size:11px;background:#eef3ff;color:#3152b8;padding:5px 8px;border-radius:20px;font-weight:700}
+.canvaswrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:260px;display:grid;place-items:center}
+canvas{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain}
+.placeholder{padding:36px 20px;text-align:center;color:var(--muted);line-height:1.6}
+.placeholder .symbol{font-size:36px}
+.note{font-size:12px;color:var(--muted);line-height:1.55;margin:12px 2px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;padding-top:20px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.panel{padding:15px}.canvaswrap{min-height:180px}main{padding-top:15px}}
+@media print{
+ body{background:white}
+ header,.settings,.previewhead,.note,footer,.no-print{display:none!important}
+ main{max-width:none;padding:0}
+ .layout{display:block}
+ .panel{border:0;box-shadow:none;padding:0}
+ .canvaswrap{border:0;min-height:0}
+ canvas{width:100%;max-height:none}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="kicker">Studio gambar sederhana</div>
+ <h1>DashSketch</h1>
+ <p>Ubah foto menjadi pola garis putus-putus yang samar untuk dijiplak dan ditebalkan. Semua proses dilakukan langsung di perangkatmu.</p>
+</header>
+<div class="layout">
+ <section class="panel settings">
+  <h2>1. Masukkan foto</h2>
+  <label class="uploadbox" for="file">
+   <div style="font-size:27px">＋</div>
+   <strong>Pilih foto dari perangkat</strong>
+   <span>JPG, PNG, atau WebP</span>
+  </label>
+  <input id="file" type="file" accept="image/*">
+  <div class="control">
+   <div class="labelrow"><label for="detail">Detail garis</label><output id="detailOut">55%</output></div>
+   <input id="detail" type="range" min="15" max="100" value="78">
+   <p class="hint">Naikkan untuk menangkap detail kecil seperti rambut, mata, lipatan, dan tekstur.</p>
+  </div>
+  <div class="control">
+   <div class="labelrow"><label for="thin">Ketipisan garis</label><output id="thinOut">1 px</output></div>
+   <input id="thin" type="range" min="1" max="3" value="1">
+   <p class="hint">Pilih 1 px untuk garis paling tipis.</p>
+  </div>
+  <div class="control">
+   <div class="labelrow"><label for="fade">Kesamaran garis</label><output id="fadeOut">18%</output></div>
+   <input id="fade" type="range" min="5" max="55" value="18">
+   <p class="hint">Semakin rendah, garis semakin samar. Untuk cetak, coba 12–22%.</p>
+  </div>
+  <div class="control">
+   <div class="labelrow"><label for="dash">Panjang garis putus-putus</label><output id="dashOut">3 px</output></div>
+   <input id="dash" type="range" min="1" max="9" value="3">
+  </div>
+  <div class="control">
+   <div class="labelrow"><label for="gap">Jarak antargaris</label><output id="gapOut">4 px</output></div>
+   <input id="gap" type="range" min="2" max="12" value="4">
+  </div>
+  <label class="checkrow"><input id="invert" type="checkbox"> Balik terang/gelap untuk foto tertentu</label>
+  <div class="buttons">
+   <button id="reset" class="secondary" type="button">Atur ulang</button>
+   <button id="download" class="primary" type="button" disabled>Unduh PNG</button>
+   <button id="print" class="secondary" type="button" disabled style="grid-column:1/-1">Cetak pola</button>
+  </div>
+ </section>
+ <section class="panel">
+  <div class="previewhead">
+   <h2>2. Hasil pola</h2>
+   <span class="tag">Latar putih</span>
+  </div>
+  <div class="canvaswrap" id="canvaswrap">
+   <div class="placeholder" id="placeholder">
+    <div class="symbol">▧</div>
+    <strong>Pratinjau akan muncul di sini</strong><br>
+    Pilih foto untuk mulai membuat pola.
+   </div>
+   <canvas id="canvas" hidden></canvas>
+  </div>
+  <p class="note">Tips detail: mulai dari Detail 78–90%, Ketipisan 1 px, dan Kesamaran 12–20%. Jika garis terlalu ramai, turunkan Detail. Foto diproses di browser dan tidak diunggah ke server.</p>
+ </section>
+</div>
+<footer>DashSketch · Gratis · Tanpa API key</footer>
+</main>
+<script>
+const fileInput=document.getElementById('file');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d',{willReadFrequently:true});
+const placeholder=document.getElementById('placeholder');
+const downloadBtn=document.getElementById('download');
+const printBtn=document.getElementById('print');
+const controls=['detail','thin','fade','dash','gap','invert'];
+let sourceImage=null, sourceName='sketsa';
+const defaults={detail:78,thin:1,fade:18,dash:3,gap:4};
+const $=id=>document.getElementById(id);
+
+function updateLabels(){
+ $('detailOut').textContent=$('detail').value+'%';
+ $('thinOut').textContent=$('thin').value+' px';
+ $('fadeOut').textContent=$('fade').value+'%';
+ $('dashOut').textContent=$('dash').value+' px';
+ $('gapOut').textContent=$('gap').value+' px';
+}
+function processImage(){
+ updateLabels();
+ if(!sourceImage)return;
+ const maxSide=1100;
+ const scale=Math.min(1,maxSide/Math.max(sourceImage.naturalWidth,sourceImage.naturalHeight));
+ const w=Math.max(1,Math.round(sourceImage.naturalWidth*scale));
+ const h=Math.max(1,Math.round(sourceImage.naturalHeight*scale));
+ canvas.width=w;canvas.height=h;
+ const work=document.createElement('canvas');work.width=w;work.height=h;
+ const wc=work.getContext('2d',{willReadFrequently:true});
+ wc.drawImage(sourceImage,0,0,w,h);
+ const img=wc.getImageData(0,0,w,h), d=img.data;
+ const gray=new Float32Array(w*h);
+ for(let i=0,p=0;i<d.length;i+=4,p++){
+   gray[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+ }
+ // Edge strength from a Sobel-like neighborhood difference.
+ const edge=new Float32Array(w*h);
+ let maxEdge=1;
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=y*w+x;
+   const gx=-gray[p-w-1]+gray[p-w+1]-2*gray[p-1]+2*gray[p+1]-gray[p+w-1]+gray[p+w+1];
+   const gy=-gray[p-w-1]-2*gray[p-w]-gray[p-w+1]+gray[p+w-1]+2*gray[p+w]+gray[p+w+1];
+   const e=Math.sqrt(gx*gx+gy*gy);
+   edge[p]=e;if(e>maxEdge)maxEdge=e;
+ }
+ const detail=Number($('detail').value);
+ // Gamma-style normalization lifts subtle edges so small features are retained.
+ const edgeStrength=v=>Math.sqrt(Math.min(1,v/maxEdge))*255;
+ const threshold=92-(detail*0.76);
+ const dash=Number($('dash').value), gap=Number($('gap').value);
+ const lineWidth=Number($('thin').value);
+ const alpha=Number($('fade').value)/100;
+ ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
+ ctx.lineCap='round';
+ // Build tiny horizontal dashed strokes only where edges are detected.
+ for(let y=1;y<h-1;y+=Math.max(2,lineWidth+1)){
+   let run=false,runStart=0;
+   for(let x=1;x<w-1;x++){
+     const p=y*w+x;
+     const strength=edgeStrength(edge[p]);
+     const isEdge=strength>threshold;
+     if(isEdge&&!run){run=true;runStart=x;}
+     if((!isEdge||x===w-2)&&run){
+       const end=isEdge&&x===w-2?x:x-1;
+       if(end-runStart>=1){
+         for(let sx=runStart;sx<=end;sx+=dash+gap){
+           const ex=Math.min(end,sx+dash);
+           // Keep only strokes that lie over edge pixels, so the pattern follows the object.
+           for(let xx=sx;xx<=ex;xx++){
+             const q=y*w+xx;
+             if(edgeStrength(edge[q])>threshold){
+               const shade=$('invert').checked?70:45;
+               ctx.fillStyle=`rgba(${shade},${shade},${shade},${alpha})`;
+               ctx.fillRect(xx,y,lineWidth,Math.max(1,lineWidth));
+             }
+           }
+         }
+       }
+       run=false;
+     }
+   }
+ }
+ canvas.hidden=false;placeholder.hidden=true;
+ downloadBtn.disabled=false;printBtn.disabled=false;
+}
+fileInput.addEventListener('change',e=>{
+ const f=e.target.files&&e.target.files[0];if(!f)return;
+ if(!f.type.startsWith('image/')){alert('Pilih file gambar yang valid.');return;}
+ sourceName=(f.name||'sketsa').replace(/\.[^.]+$/,'');
+ const url=URL.createObjectURL(f);
+ const img=new Image();
+ img.onload=()=>{sourceImage=img;processImage();URL.revokeObjectURL(url);};
+ img.onerror=()=>{alert('Foto tidak bisa dibuka. Coba file gambar lain.');URL.revokeObjectURL(url);};
+ img.src=url;
+});
+controls.forEach(id=>$(id).addEventListener('input',processImage));
+$('reset').addEventListener('click',()=>{
+ Object.entries(defaults).forEach(([k,v])=>$(k).value=v);
+ $('invert').checked=false;processImage();
+});
+downloadBtn.addEventListener('click',()=>{
+ if(!sourceImage)return;
+ const a=document.createElement('a');
+ a.download=sourceName+'-garis-putus-putus.png';
+ a.href=canvas.toDataURL('image/png');a.click();
+});
+printBtn.addEventListener('click',()=>window.print());
+updateLabels();
+</script>
+</body>
+</html>
